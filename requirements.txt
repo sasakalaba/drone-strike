@@ -1,0 +1,5 @@
+Django
+psycopg2
+ipython[notebook]
+dj-database-url
+psycopg2-binary==2.7.4
