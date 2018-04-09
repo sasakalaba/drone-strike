@@ -76,6 +76,7 @@ TIME_ZONE = 'UTC'
 USE_I18N = True
 USE_L10N = True
 USE_TZ = True
+DATE_FORMAT = '%Y-%m-%dT%H:%M:%S.%fZ'
 
 
 # Static files (CSS, JavaScript, Images)
@@ -84,3 +85,6 @@ STATIC_ROOT = ENV_STR('STATIC_ROOT', ABS_PATH('static'))
 STATICFILES_DIRS = (
     ABS_PATH('project', 'static'),
 )
+
+# Strike configuration
+STRIKE_DATA_URL = ENV_STR('STRIKE_DATA_URL', 'https://api.dronestre.am/data')
