@@ -6,15 +6,36 @@ Drone Strike
 {% endblock %}
 
 {% block base %}
-  <!-- Map -->
   <h1>Drone Strike map</h1>
-  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
 
-  <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" />
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter">
+      <h2>Date</h2>
+      <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" />
+    </div>
 
-  <input type="text" id="tbCountries" />
+    <div class="filter">
+      <h2>Province</h2>
+      <input type="text" id="tbCountries" />
+    </div>
 
-  <div id="map"> </div>
+    <div class="filter">
+      <h2>City / Town</h2>
+      <input type="text" id="tbCountries" />
+    </div>
+
+    <div class="filter">
+      <h2>Country</h2>
+      <input type="text" id="tbCountries" />
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div style="display: none;">
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+  </div>
+  <div id="map"></div>
 
   <!-- Search results -->
   <div id="search_results">
@@ -83,12 +104,73 @@ Drone Strike
       // Create marker clusters
       var markerCluster = new MarkerClusterer(map, markers,
             {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+    }
 
+    function initAutocomplete() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: -33.8688, lng: 151.2195},
+        zoom: 13,
+        mapTypeId: 'roadmap'
+      });
 
-      // Searchbar
+      // Create the search box and link it to the UI element.
       var input = document.getElementById('pac-input');
-      // var searchBox = new google.maps.places.SearchBox(input);
-      // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+      var searchBox = new google.maps.places.SearchBox(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+      // Bias the SearchBox results towards current map's viewport.
+      map.addListener('bounds_changed', function() {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      var markers = [];
+      // Listen for the event fired when the user selects a prediction and retrieve
+      // more details for that place.
+      searchBox.addListener('places_changed', function() {
+        var places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        // Clear out the old markers.
+        markers.forEach(function(marker) {
+          marker.setMap(null);
+        });
+        markers = [];
+
+        // For each place, get the icon, name and location.
+        var bounds = new google.maps.LatLngBounds();
+        places.forEach(function(place) {
+          if (!place.geometry) {
+            console.log("Returned place contains no geometry");
+            return;
+          }
+          var icon = {
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(25, 25)
+          };
+
+          // Create a marker for each place.
+          markers.push(new google.maps.Marker({
+            map: map,
+            icon: icon,
+            title: place.name,
+            position: place.geometry.location
+          }));
+
+          if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        });
+        map.fitBounds(bounds);
+      });
     }
   </script>
 
@@ -122,11 +204,16 @@ Drone Strike
   </script>
 
   <!-- Places library -->
+  <!--
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places" async defer></script>
+  -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places&callback=initAutocomplete" async defer></script>
 
   <!-- Marker Cluster library -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
   <!-- Google Maps API key -->
+  <!--
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&callback=initMap"></script>
+  -->
 {% endblock %}
