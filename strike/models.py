@@ -28,6 +28,7 @@ class Strike(models.Model):
 class Location(models.Model):
     lat = models.CharField(max_length=100)
     lon = models.CharField(max_length=100)
+    # TODO: this should maybe be float
     # lat = models.DecimalField(max_digits=17, decimal_places=14, default='')
     # lon = models.DecimalField(max_digits=17, decimal_places=14, default='')
     country = models.CharField(max_length=100)
