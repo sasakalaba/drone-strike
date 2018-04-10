@@ -34,7 +34,6 @@ class Importer(object):
         try:
             data = json.loads(response.read().decode())
         except json.JSONDecodeError:
-            # TODO: maybe just let JSONDecodeError do its thing here.
             return {'success': False, 'error': 'Not a valid JSON file.'}
 
         if data['status'] != 'OK':
@@ -55,6 +54,13 @@ class Importer(object):
                 raise ValidationError(json_data['error'])
 
         with transaction.atomic():
+            counter = {
+                'countries': 0,
+                'locations': 0,
+                'strikes': 0,
+                'missing_coor': 0,
+            }
+
             # Copy the list
             strikes = self.data['data']['strike'][:]
 
@@ -64,47 +70,32 @@ class Importer(object):
                     location_data[key] = strike.pop(key, None)
                 strike.pop('_id')
                 strike['date'] = self.parse_date(strike['date'])
+
                 country, created = Country.objects.get_or_create(
                     name=location_data.pop('country', None))
                 location_data['country'] = country.id
 
+                if created:
+                    counter['countries'] += 1
+
                 # TODO: move this to serializer
                 if location_data['lat'] == '':
                     location_data['lat'] = None
+                    counter['missing_coor'] += 1
                 if location_data['lon'] == '':
                     location_data['lon'] = None
 
                 serializer = LocationSerializer(data=location_data)
                 if serializer.is_valid():
                     location_id = serializer.save().id
+                    counter['locations'] += 1
                 else:
                     location_id = str(serializer.errors['instance'][0])
-                    print(serializer.errors['error'])
 
                 strike['location'] = location_id
                 serializer = StrikeSerializer(data=strike)
                 if serializer.is_valid():
                     serializer.save()
-                else:
-                    print(serializer.errors)
+                    counter['strikes'] += 1
 
-
-        # TODO: implement counter
-        """
-        update_counter = {
-            'created': self.counter['created'],
-            'updated': self.counter['updated'],
-        }
-        """
-
-        # TODO: return message
-        """
-        return (
-            'Beers:\n\tCreated: %s \n\tUpdated: %s \n' % (
-                update_counter['created'],
-                update_counter['updated'],
-                update_counter['no_coordinates']
-            )
-        )
-        """
-        pass
+        return counter

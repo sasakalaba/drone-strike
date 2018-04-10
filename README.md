@@ -61,3 +61,7 @@ Start the server:
 
     python manage.py collectstatic
     python manage.py runserver
+
+
+## Management commands:
+    python manage.py import_data
