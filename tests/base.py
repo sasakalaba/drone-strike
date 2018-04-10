@@ -2,7 +2,6 @@ from django.test import TestCase
 from strike.models import Country
 
 
-
 class BaseTestCase(TestCase):
     """
     Base test class.
