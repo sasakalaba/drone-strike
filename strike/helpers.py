@@ -47,7 +47,7 @@ class Importer(object):
         """
         Main import method.
         """
-
+        # Load json_data if not already loaded.
         if self.data is None:
             json_data = self.get_json()
             if not json_data['success']:
@@ -65,16 +65,19 @@ class Importer(object):
             strikes = self.data['data']['strike'][:]
 
             for strike in strikes:
+                # Set location_data
                 location_data = {}
                 for key in self.location_keys:
                     location_data[key] = strike.pop(key, None)
+
+                # Set strike data
                 strike.pop('_id')
                 strike['date'] = self.parse_date(strike['date'])
 
+                # Create country, and update counter and fk.
                 country, created = Country.objects.get_or_create(
                     name=location_data.pop('country', None))
                 location_data['country'] = country.id
-
                 if created:
                     counter['countries'] += 1
 
@@ -85,6 +88,7 @@ class Importer(object):
                 if location_data['lon'] == '':
                     location_data['lon'] = None
 
+                # Create location, and update counter and fk.
                 serializer = LocationSerializer(data=location_data)
                 if serializer.is_valid():
                     location_id = serializer.save().id
@@ -92,6 +96,7 @@ class Importer(object):
                 else:
                     location_id = str(serializer.errors['instance'][0])
 
+                # Create strike and update counter.
                 strike['location'] = location_id
                 serializer = StrikeSerializer(data=strike)
                 if serializer.is_valid():

@@ -1,5 +1,5 @@
-from decimal import Decimal
 from django.test import TestCase
+from strike.models import Country
 
 
 
@@ -9,4 +9,4 @@ class BaseTestCase(TestCase):
     """
 
     def setUp(self):
-        pass
+        self.country = Country.objects.create(name='SasaLand')

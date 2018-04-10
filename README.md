@@ -54,6 +54,10 @@ To run the automated test suite:
 
     python manage.py test --settings=project.settings.test
 
+To run specific test:
+
+    python manage.py test tests.test_unit.ImporterTest.test_parse_date --settings=project.settings.test
+
 
 ## Start server
 
