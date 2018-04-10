@@ -4,7 +4,7 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from urllib.request import urlopen
-from .models import Strike, Location
+from .models import Strike, Location, Country
 
 
 class Importer(object):
@@ -64,7 +64,10 @@ class Importer(object):
                     location_data[key] = strike.pop(key, None)
                 strike.pop('_id')
                 strike['date'] = self.parse_date(strike['date'])
-                location, created = Location.objects.get_or_create(**location_data)
+                country, created = Country.objects.get_or_create(
+                    name=location_data.pop('country', None))
+                location, created = Location.objects.get_or_create(
+                    country=country, **location_data)
                 Strike.objects.create(location=location, **strike)
 
 

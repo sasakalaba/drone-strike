@@ -26,18 +26,20 @@ class Strike(models.Model):
 
 
 class Location(models.Model):
+    country = models.ForeignKey('Country', on_delete=models.CASCADE)
     lat = models.CharField(max_length=100)
     lon = models.CharField(max_length=100)
     # TODO: this should maybe be float
     # lat = models.DecimalField(max_digits=17, decimal_places=14, default='')
     # lon = models.DecimalField(max_digits=17, decimal_places=14, default='')
-    country = models.CharField(max_length=100)
     town = models.CharField(max_length=255, blank=True, null=True)
     location = models.CharField(max_length=255)
 
 
     def __str__(self):
-        return str(self.id)
+        if self.town:
+            return ' - '.join([self.country.name, self.town])
+        return self.country.name
 
     @property
     def coordinates(self):
@@ -45,5 +47,11 @@ class Location(models.Model):
         return ''
 
 
-# KADA POSTAVIS SVA POLJA PROVJERI KOJA MOGU BITI BLANK
-#
+class Country(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name_plural = 'Countries'
+
+    def __str__(self):
+        return str(self.name)
