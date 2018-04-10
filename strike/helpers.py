@@ -4,7 +4,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from urllib.request import urlopen
-from .models import Strike, Location, Country
+from .models import Country
+from .serializers import StrikeSerializer, LocationSerializer
 
 
 class Importer(object):
@@ -53,7 +54,6 @@ class Importer(object):
             if not json_data['success']:
                 raise ValidationError(json_data['error'])
 
-        # TODO: Test this with invalid data
         with transaction.atomic():
             # Copy the list
             strikes = self.data['data']['strike'][:]
@@ -66,9 +66,27 @@ class Importer(object):
                 strike['date'] = self.parse_date(strike['date'])
                 country, created = Country.objects.get_or_create(
                     name=location_data.pop('country', None))
-                location, created = Location.objects.get_or_create(
-                    country=country, **location_data)
-                Strike.objects.create(location=location, **strike)
+                location_data['country'] = country.id
+
+                # TODO: move this to serializer
+                if location_data['lat'] == '':
+                    location_data['lat'] = None
+                if location_data['lon'] == '':
+                    location_data['lon'] = None
+
+                serializer = LocationSerializer(data=location_data)
+                if serializer.is_valid():
+                    location_id = serializer.save().id
+                else:
+                    location_id = str(serializer.errors['instance'][0])
+                    print(serializer.errors['error'])
+
+                strike['location'] = location_id
+                serializer = StrikeSerializer(data=strike)
+                if serializer.is_valid():
+                    serializer.save()
+                else:
+                    print(serializer.errors)
 
 
         # TODO: implement counter
