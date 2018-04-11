@@ -1,13 +1,13 @@
-from django.http import HttpResponse
-from django.template import loader
+from django.shortcuts import render
+from django.views import View
 from .models import Location
 
 
-def index(request):
-    template = loader.get_template('index.html')
+class Index(View):
+    template = 'index.html'
+    context = {}
 
-    # locations = Location.objects.all()
-    locations = Location.objects.exclude(lat__exact='', lon__exact='')
-    context = {'locations': locations}
-
-    return HttpResponse(template.render(context, request))
+    def get(self, request, *args, **kwargs):
+        locations = Location.objects.all()
+        self.context = {'locations': locations}
+        return render(request, self.template, self.context)
