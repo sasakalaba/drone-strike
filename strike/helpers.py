@@ -70,6 +70,16 @@ class Importer(object):
                 for key in self.location_keys:
                     location_data[key] = strike.pop(key, None)
 
+                # TODO: store this in an array and call Google Maps API to
+                #       fetch missing coordinates
+                if location_data['lat'] == '':
+                    # location_data['lat'] = None
+                    counter['missing_coor'] += 1
+                    continue
+                if location_data['lon'] == '':
+                    # location_data['lon'] = None
+                    continue
+
                 # Set strike data
                 strike.pop('_id')
                 strike['date'] = self.parse_date(strike['date'])
@@ -80,13 +90,6 @@ class Importer(object):
                 location_data['country'] = country.id
                 if created:
                     counter['countries'] += 1
-
-                # TODO: move this to serializer
-                if location_data['lat'] == '':
-                    location_data['lat'] = None
-                    counter['missing_coor'] += 1
-                if location_data['lon'] == '':
-                    location_data['lon'] = None
 
                 # Create location, and update counter and fk.
                 serializer = LocationSerializer(data=location_data)
