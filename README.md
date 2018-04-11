@@ -69,3 +69,4 @@ Start the server:
 
 ## Management commands:
     python manage.py import_data
+    python manage.py destroy_data
