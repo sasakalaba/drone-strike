@@ -1,5 +1,6 @@
-import mock
+import freezegun
 import json
+import mock
 from datetime import date, datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.urls import reverse
@@ -371,22 +372,38 @@ class IndexViewTest(BaseTestCase):
     def setUp(self):
         super(IndexViewTest, self).setUp()
         self.view = IndexView()
+        self.location = Location.objects.create(country=self.country)
 
+    @freezegun.freeze_time('2012-01-14')
     def test_get(self):
         """
         Index GET,
         """
-        location = Location.objects.create(country=self.country)
         Strike.objects.create(
             number=666,
-            location=location,
+            location=self.location,
             date=datetime.today().date() - timedelta(days=1),
             articles=[],
             names=[]
         )
 
+        # Ensure that proper queryset is returned.
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            list(response.context['strikes']), list(Strike.objects.all()))
+            list(response.context['locations']), list(Location.objects.all()))
         self.assertEqual(Strike.objects.count(), 1)
+
+        # Ensure that proper daterange is returned.
+        self.assertEqual(response.context['daterange'], '01-14-1987 - 01-14-2012')
+
+    @freezegun.freeze_time('2012-01-14')
+    def test_date(self):
+        """
+        Date method responsible for parsing data for filtering.
+        """
+        date_range = {
+            'date_lower': freezegun.api.FakeDate(1987, 1, 14),
+            'date_upper': freezegun.api.FakeDate(2012, 1, 14)
+        }
+        self.assertEqual(self.view.date, date_range)

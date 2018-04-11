@@ -15,7 +15,7 @@ Drone Strike
   <div class="filters">
     <div class="filter-item">
       <h4>Date</h4>
-      <input type="text" class="datefilter" name="daterange" value="01/01/2015 - 01/31/2015" />
+      <input type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
     </div>
 
     <div class="filter-item">
@@ -114,7 +114,7 @@ Drone Strike
           <p><span style="font-weight: bold;">Deaths</span>: {{ location.strike_info.deaths }}</p>`;
         {% else %}
           content = `
-          <h3 style="color: #600000;">Multiple strikes</h3>
+          <h3 style="color: #600000;">{{ location.strike_info.num_of_strikes }} strikes</h3>
           {% for strike in location.strike_info.strikes %}
             <p><span style="font-weight: bold;">{{ strike.number }}</span>: {{ strike.date }}</p>
           {% endfor %}`;
