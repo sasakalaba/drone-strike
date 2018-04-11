@@ -80,8 +80,8 @@ html, body {
   width: 400px;
   margin-top: 7px;
   height: 35px;
+  border: 1.5px solid grey;
 }
-
 #pac-input:focus {
   border-color: #4d90fe;
 }

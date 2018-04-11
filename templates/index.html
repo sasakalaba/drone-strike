@@ -72,17 +72,35 @@ Drone Strike
 {% block extra_script %}
   <script>
     function initMap() {
+
+      function addMarker(coors, map){
+        // Add Marker function
+        var marker = new google.maps.Marker({
+          position: coors,
+          map: map
+        });
+
+        // Marker listeners
+        marker.addListener('mouseover', function(){
+          infoWindowHover.open(map, marker);
+        });
+        marker.addListener('mouseout', function() {
+          infoWindowHover.close();
+        });
+
+        marker.addListener('click', function(){
+          infoWindowHover.close();
+          infoWindowDetail.open(map, marker);
+        });
+
+        return marker;
+      }
+
       // Init map
       var base_coor = {lat: 12.89363, lng: 39.88600};
       var map = new google.maps.Map(document.getElementById('map'), {
         zoom: 3.7,
         center: base_coor
-      });
-
-      // Add marker
-      var marker = new google.maps.Marker({
-        position: {lat: 32.30512565, lng: 69.57624435},
-        map: map
       });
 
       // Marker information
@@ -93,39 +111,22 @@ Drone Strike
         content: '<h1>Header detail</h1> \n <p>Hello world</p>'
       });
 
-
-      // Marker listeners
-      marker.addListener('mouseover', function(){
-        infoWindowHover.open(map, marker);
-      });
-      marker.addListener('mouseout', function() {
-        infoWindowHover.close();
-      });
-
-      marker.addListener('click', function(){
-        infoWindowHover.close();
-        infoWindowDetail.open(map, marker);
-      });
-
-      // Add Marker function
-      function addMarker(coors){
-        var marker = new google.maps.Marker({
-          position: coors,
-          map: map
-        });
-        return marker;
-      }
-
       // Create all markers
       var markers = []
       {% for location in locations %}
-        markers.push(addMarker({lat: {{ location.lat }}, lng: {{ location.lon }}}));
+        markers.push(addMarker({lat: {{ location.lat }}, lng: {{ location.lon }}, map: map}));
       {% endfor %}
 
       // Create marker clusters
       var markerCluster = new MarkerClusterer(map, markers,
             {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+
+      // Create the search box and link it to the UI element.
+      var input = document.getElementById('pac-input');
+      var searchBox = new google.maps.places.SearchBox(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
     }
+
 
     function initAutocomplete() {
       var map = new google.maps.Map(document.getElementById('map'), {
@@ -239,7 +240,7 @@ Drone Strike
   <!--
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places" async defer></script>
   -->
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places&callback=initAutocomplete" async defer></script>
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places&callback=initMap" async defer></script>
 
   <!-- Marker Cluster library -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
