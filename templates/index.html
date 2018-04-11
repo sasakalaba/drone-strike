@@ -6,27 +6,30 @@ Drone Strike
 {% endblock %}
 
 {% block base %}
-  <h1>Drone Strike map</h1>
+  <div class="header">
+    <img id="logo" src="{% static 'img/logo.png' %}" alt="Treviso theme logo">
+    <h2>Drone Strike</h2>
+  </div>
 
   <!-- Filters -->
   <div class="filters">
-    <div class="filter">
-      <h2>Date</h2>
-      <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" />
+    <div class="filter-item">
+      <h4>Date</h4>
+      <input type="text" class="datefilter" name="daterange" value="01/01/2015 - 01/31/2015" />
     </div>
 
-    <div class="filter">
-      <h2>Province</h2>
+    <div class="filter-item">
+      <h4>Province</h4>
       <input type="text" id="tbCountries" />
     </div>
 
-    <div class="filter">
-      <h2>City / Town</h2>
+    <div class="filter-item">
+      <h4>City / Town</h4>
       <input type="text" id="tbCountries" />
     </div>
 
-    <div class="filter">
-      <h2>Country</h2>
+    <div class="filter-item">
+      <h4>Country</h4>
       <input type="text" id="tbCountries" />
     </div>
   </div>
