@@ -35,8 +35,42 @@ class Location(models.Model):
 
     def __str__(self):
         if self.town:
-            return ' - '.join([self.country.name, self.town])
-        return self.country.name
+            location = ' - '.join([self.country.name, self.town])
+        else:
+            location = self.country.name
+        return '. '.join([str(self.id), location])
+
+    @property
+    def strike_info(self):
+        """
+        Retrieves relative strike information.
+        """
+        num_of_strikes = self.strike_set.all().count()
+
+        if not num_of_strikes:
+            return {}
+
+        elif num_of_strikes > 1:
+            info = {
+                'detail': False,
+                'num_of_strikes': num_of_strikes,
+                'strikes': [],
+            }
+            for strike in self.strike_set.all():
+                info['strikes'].append({
+                    'number': strike.number,
+                    'date': strike.date.strftime("%m-%d-%Y"),
+                })
+        else:
+            strike = self.strike_set.get()
+            info = {
+                'detail': True,
+                'number': strike.number,
+                'date': strike.date.strftime("%m-%d-%Y"),
+                'deaths': strike.deaths
+            }
+
+        return info
 
 
 class Country(models.Model):

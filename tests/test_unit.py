@@ -1,6 +1,6 @@
 import mock
 import json
-from datetime import date
+from datetime import date, datetime, timedelta
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from strike.helpers import Importer
@@ -305,12 +305,62 @@ class LocationTest(BaseTestCase):
         Ensure proper str representation is returned.
         """
         location = Location.objects.create(country=self.country)
-        self.assertEqual(str(location), 'SasaLand')
+        self.assertEqual(str(location), '%d. SasaLand' % location.id)
 
         # Town str
         location.town = 'Gotham'
         location.save()
-        self.assertEqual(str(location), 'SasaLand - Gotham')
+        self.assertEqual(str(location), '%d. SasaLand - Gotham' % location.id)
+
+    def test_strike_info(self):
+        """
+        Returns a list or a dict, depending on a set of values related to the
+        selected instance.
+        """
+        location = Location.objects.create(country=self.country)
+
+        # No related strike
+        self.assertEqual(location.strike_info, {})
+
+        # One related strike
+        Strike.objects.create(
+            number=666,
+            location=location,
+            date=date(2002, 2, 1),
+            articles=[],
+            names=[],
+            deaths='4'
+        )
+        strike_info = {
+            'detail': True,
+            'number': 666,
+            'date': '02-01-2002',
+            'deaths': '4'
+        }
+        self.assertDictEqual(location.strike_info, strike_info)
+
+        # Multiple related strikes
+        Strike.objects.create(
+            number=777,
+            location=location,
+            date=date(2003, 3, 2),
+            articles=[],
+            names=[],
+            deaths='3'
+        )
+
+        strike_info1 = {
+            'number': 666,
+            'date': '02-01-2002',
+        }
+        strike_info2 = {
+            'number': 777,
+            'date': '03-02-2003',
+        }
+        self.assertFalse(location.strike_info['detail'])
+        self.assertEqual(location.strike_info['num_of_strikes'], 2)
+        self.assertIn(strike_info1, location.strike_info['strikes'])
+        self.assertIn(strike_info2, location.strike_info['strikes'])
 
 
 class IndexViewTest(BaseTestCase):
@@ -326,9 +376,17 @@ class IndexViewTest(BaseTestCase):
         """
         Index GET,
         """
-        Location.objects.create(country=self.country)
+        location = Location.objects.create(country=self.country)
+        Strike.objects.create(
+            number=666,
+            location=location,
+            date=datetime.today().date() - timedelta(days=1),
+            articles=[],
+            names=[]
+        )
+
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
-            list(response.context['locations']), list(Location.objects.all()))
-        self.assertEqual(Location.objects.count(), 1)
+            list(response.context['strikes']), list(Strike.objects.all()))
+        self.assertEqual(Strike.objects.count(), 1)
