@@ -36,9 +36,6 @@ class ImporterTest(BaseTestCase):
         class ResponseInvalid(object):
             code = 400
 
-            def read(self):
-                raise json.JSONDecodeError(msg='', doc=Doc(), pos=3)
-
         response = ResponseInvalid()
         urlopen.return_value = response
         status = self.importer.get_json()
@@ -71,7 +68,7 @@ class ImporterTest(BaseTestCase):
     @mock.patch('strike.helpers.urlopen')
     def test_get_json_invalid_data(self, urlopen):
         """
-        get_json bad request.
+        get_json invalid data.
         """
         class ResponseInvalidData(object):
             code = 200
@@ -88,7 +85,7 @@ class ImporterTest(BaseTestCase):
     @mock.patch('strike.helpers.urlopen')
     def test_get_json_success(self, urlopen):
         """
-        get_json bad request.
+        get_json success.
         """
         class Response(object):
             code = 200
