@@ -97,7 +97,7 @@ class Importer(object):
                 if serializer.is_valid():
                     location_id = serializer.save().id
                     counter['locations'] += 1
-                else:
+                elif str(serializer.errors.get('error', ['', ])[0]) == 'Location already exists.':
                     location_id = str(serializer.errors['instance'][0])
 
                 # Create strike and update counter.
