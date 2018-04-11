@@ -18,6 +18,7 @@ class LocationSerializer(serializers.ModelSerializer):
         Custom validation for uniqueness of lat and lon.
         """
         # TODO: Replace this with GeoDjango PointField.
+        #       https://trello.com/c/03yB0K0n
         if data['lat'] and data['lon']:
             try:
                 location = Location.objects.get(lat=data['lat'], lon=data['lon'])

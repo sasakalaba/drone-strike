@@ -72,6 +72,7 @@ class Importer(object):
 
                 # TODO: store this in an array and call Google Maps API to
                 #       fetch missing coordinates
+                #       https://trello.com/c/eaBQwQ02
                 if location_data['lat'] == '':
                     # location_data['lat'] = None
                     counter['missing_coor'] += 1
