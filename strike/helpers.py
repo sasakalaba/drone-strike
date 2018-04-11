@@ -4,7 +4,8 @@ from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.db import transaction
 from urllib.request import urlopen
-from .models import Strike, Location
+from .models import Country
+from .serializers import StrikeSerializer, LocationSerializer
 
 
 class Importer(object):
@@ -33,7 +34,6 @@ class Importer(object):
         try:
             data = json.loads(response.read().decode())
         except json.JSONDecodeError:
-            # TODO: maybe just let JSONDecodeError do its thing here.
             return {'success': False, 'error': 'Not a valid JSON file.'}
 
         if data['status'] != 'OK':
@@ -47,43 +47,64 @@ class Importer(object):
         """
         Main import method.
         """
-
+        # Load json_data if not already loaded.
         if self.data is None:
             json_data = self.get_json()
             if not json_data['success']:
                 raise ValidationError(json_data['error'])
 
-        # TODO: Test this with invalid data
         with transaction.atomic():
+            counter = {
+                'countries': 0,
+                'locations': 0,
+                'strikes': 0,
+                'missing_coor': 0,
+            }
+
             # Copy the list
             strikes = self.data['data']['strike'][:]
 
             for strike in strikes:
+                # Set location_data
                 location_data = {}
                 for key in self.location_keys:
                     location_data[key] = strike.pop(key, None)
+
+                # TODO: store this in an array and call Google Maps API to
+                #       fetch missing coordinates
+                #       https://trello.com/c/eaBQwQ02
+                if location_data['lat'] == '':
+                    # location_data['lat'] = None
+                    counter['missing_coor'] += 1
+                    continue
+                if location_data['lon'] == '':
+                    # location_data['lon'] = None
+                    continue
+
+                # Set strike data
                 strike.pop('_id')
                 strike['date'] = self.parse_date(strike['date'])
-                location, created = Location.objects.get_or_create(**location_data)
-                Strike.objects.create(location=location, **strike)
 
+                # Create country, and update counter and fk.
+                country, created = Country.objects.get_or_create(
+                    name=location_data.pop('country', None))
+                location_data['country'] = country.id
+                if created:
+                    counter['countries'] += 1
 
-        # TODO: implement counter
-        """
-        update_counter = {
-            'created': self.counter['created'],
-            'updated': self.counter['updated'],
-        }
-        """
+                # Create location, and update counter and fk.
+                serializer = LocationSerializer(data=location_data)
+                if serializer.is_valid():
+                    location_id = serializer.save().id
+                    counter['locations'] += 1
+                elif str(serializer.errors.get('error', ['', ])[0]) == 'Location already exists.':
+                    location_id = str(serializer.errors['instance'][0])
 
-        # TODO: return message
-        """
-        return (
-            'Beers:\n\tCreated: %s \n\tUpdated: %s \n' % (
-                update_counter['created'],
-                update_counter['updated'],
-                update_counter['no_coordinates']
-            )
-        )
-        """
-        pass
+                # Create strike and update counter.
+                strike['location'] = location_id
+                serializer = StrikeSerializer(data=strike)
+                if serializer.is_valid():
+                    serializer.save()
+                    counter['strikes'] += 1
+
+        return counter

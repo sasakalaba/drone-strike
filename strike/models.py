@@ -6,17 +6,17 @@ class Strike(models.Model):
     location = models.ForeignKey('Location', on_delete=models.CASCADE)
     number = models.PositiveIntegerField(unique=True)
     date = models.DateField(default=None)
-    narrative = models.TextField(blank=True, null=True)
+    narrative = models.TextField(max_length=1000, blank=True, null=True)
     deaths = models.CharField(max_length=50, blank=True, null=True)
     deaths_min = models.CharField(max_length=50, blank=True, null=True)
     deaths_max = models.CharField(max_length=50, blank=True, null=True)
-    civilians = models.CharField(max_length=1000, blank=True, null=True)
-    injuries = models.CharField(max_length=1000, blank=True, null=True)
-    children = models.CharField(max_length=1000, blank=True, null=True)
-    tweet_id = models.CharField(max_length=18)
-    bureau_id = models.CharField(max_length=10)
-    bij_summary_short = models.CharField(max_length=1000, blank=True, null=True)
-    bij_link = models.URLField(max_length=300)
+    civilians = models.CharField(max_length=50, blank=True, null=True)
+    injuries = models.CharField(max_length=50, blank=True, null=True)
+    children = models.CharField(max_length=50, blank=True, null=True)
+    tweet_id = models.CharField(max_length=18, blank=True, null=True)
+    bureau_id = models.CharField(max_length=10, blank=True, null=True)
+    bij_summary_short = models.TextField(max_length=1000, blank=True, null=True)
+    bij_link = models.URLField(max_length=300, blank=True, null=True)
     target = models.CharField(max_length=1000, blank=True, null=True)
     articles = ArrayField(models.CharField(max_length=255, blank=True))
     names = ArrayField(models.CharField(max_length=10000000, blank=True))
@@ -26,24 +26,24 @@ class Strike(models.Model):
 
 
 class Location(models.Model):
-    lat = models.CharField(max_length=100)
-    lon = models.CharField(max_length=100)
-    # TODO: this should maybe be float
-    # lat = models.DecimalField(max_digits=17, decimal_places=14, default='')
-    # lon = models.DecimalField(max_digits=17, decimal_places=14, default='')
-    country = models.CharField(max_length=100)
+    country = models.ForeignKey('Country', on_delete=models.CASCADE)
+    lat = models.DecimalField(max_digits=12, decimal_places=9, blank=True, null=True)
+    lon = models.DecimalField(max_digits=12, decimal_places=9, blank=True, null=True)
     town = models.CharField(max_length=255, blank=True, null=True)
-    location = models.CharField(max_length=255)
+    location = models.CharField(max_length=255, blank=True, null=True)
 
 
     def __str__(self):
-        return str(self.id)
-
-    @property
-    def coordinates(self):
-        # TODO: return lat and lon as a dict
-        return ''
+        if self.town:
+            return ' - '.join([self.country.name, self.town])
+        return self.country.name
 
 
-# KADA POSTAVIS SVA POLJA PROVJERI KOJA MOGU BITI BLANK
-#
+class Country(models.Model):
+    name = models.CharField(max_length=100, unique=True)
+
+    class Meta:
+        verbose_name_plural = 'Countries'
+
+    def __str__(self):
+        return str(self.name)
