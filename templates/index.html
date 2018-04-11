@@ -19,18 +19,18 @@ Drone Strike
     </div>
 
     <div class="filter-item">
+      <h4>Country</h4>
+      <input type="text" id="tbCountries" placeholder="Select a country." />
+    </div>
+
+    <div class="filter-item">
       <h4>Province</h4>
-      <input type="text" id="tbCountries" />
+      <input type="text" id="tbProvinces" placeholder="Select a country first."/>
     </div>
 
     <div class="filter-item">
       <h4>City / Town</h4>
-      <input type="text" id="tbCountries" />
-    </div>
-
-    <div class="filter-item">
-      <h4>Country</h4>
-      <input type="text" id="tbCountries" />
+      <input type="text" id="tbCities" placeholder="Select a country first." />
     </div>
   </div>
 
@@ -199,10 +199,24 @@ Drone Strike
       $(document).ready(function() {
           BindControls();
           $('input[name="daterange"]').daterangepicker();
+
+          // Set filter placeholders
+          $("#tbCountries").on("change", function( eventObject ) {
+              $('#tbProvinces').attr("placeholder", 'Select a province.');
+              $('#tbCities').attr("placeholder", 'Select a city.');
+          });
+          $("#tbCountries").keyup(function() {
+              if (!this.value) {
+                  $('#tbProvinces').attr("placeholder", 'Select a country first.');
+                  $('#tbCities').attr("placeholder", 'Select a country first.');
+              }
+          });
+
       });
 
       function BindControls() {
-          var Countries = ['ARGENTINA',
+          var countries = [
+              'Argentina',
               'AUSTRALIA',
               'BRAZIL',
               'BELARUS',
@@ -212,10 +226,11 @@ Drone Strike
               'CANADA',
               'CHILE',
               'DENMARK',
-              'DOMINICA'];
+              'DOMINICA'
+          ];
 
           $('#tbCountries').autocomplete({
-              source: Countries,
+              source: countries,
               minLength: 0,
               scroll: true
           }).focus(function() {

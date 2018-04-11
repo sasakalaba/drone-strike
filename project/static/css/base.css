@@ -120,6 +120,7 @@ html, body {
 }
 .filter-item input {
   border-radius: 3px;
+  padding-left: 10px;
 }
 .filter-item .datefilter {
   padding-left: 13px;
