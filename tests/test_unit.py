@@ -2,9 +2,11 @@ import mock
 import json
 from datetime import date
 from django.core.exceptions import ValidationError
+from django.urls import reverse
 from strike.helpers import Importer
-from strike.models import Location, Country
+from strike.models import Location
 from strike.serializers import LocationSerializer
+from strike.views import IndexView
 from rest_framework import exceptions
 from .base import BaseTestCase
 
@@ -171,3 +173,24 @@ class LocationTest(BaseTestCase):
         location.town = 'Gotham'
         location.save()
         self.assertEqual(str(location), 'SasaLand - Gotham')
+
+
+class IndexViewTest(BaseTestCase):
+    """
+    Unit tests for import data helper function.
+    """
+
+    def setUp(self):
+        super(IndexViewTest, self).setUp()
+        self.view = IndexView()
+
+    def test_get(self):
+        """
+        Index GET,
+        """
+        Location.objects.create(country=self.country)
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context['locations']), list(Location.objects.all()))
+        self.assertEqual(Location.objects.count(), 1)

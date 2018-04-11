@@ -3,7 +3,7 @@ from django.views import View
 from .models import Location
 
 
-class Index(View):
+class IndexView(View):
     template = 'index.html'
     context = {}
 
