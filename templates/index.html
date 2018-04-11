@@ -200,18 +200,12 @@ Drone Strike
           BindControls();
           $('input[name="daterange"]').daterangepicker();
 
-          // Set filter placeholders
-          $("#tbCountries").on("change", function( eventObject ) {
-              $('#tbProvinces').attr("placeholder", 'Select a province.');
-              $('#tbCities').attr("placeholder", 'Select a city.');
-          });
           $("#tbCountries").keyup(function() {
-              if (!this.value) {
+              if (this.value == '') {
                   $('#tbProvinces').attr("placeholder", 'Select a country first.');
                   $('#tbCities').attr("placeholder", 'Select a country first.');
               }
           });
-
       });
 
       function BindControls() {
@@ -235,6 +229,8 @@ Drone Strike
               scroll: true
           }).focus(function() {
               $(this).autocomplete("search", "");
+              $('#tbProvinces').attr("placeholder", 'Select a province.');
+              $('#tbCities').attr("placeholder", 'Select a city.');
           });
       }
   </script>
