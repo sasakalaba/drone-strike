@@ -100,6 +100,8 @@ class SearchView(View):
         """
         query = request.GET.get('search_q', '')
         queries = []
+        strikes = []
+        locations = []
 
         if query:
             for field in self.text_fields:
