@@ -92,6 +92,13 @@ class ImporterTest(BaseTestCase):
         date_str = '2002-11-03T00:00:00.000Z'
         self.assertEqual(self.importer.parse_date(date_str), date(2002, 11, 3))
 
+    def test_parse_name(self):
+        """
+        Set proper name format.
+        """
+        name = 'Pakistan-Afganistan Border'
+        self.assertEqual(self.importer.parse_name(name), 'Pakistan_Afganistan_Border')
+
     @mock.patch('strike.helpers.urlopen')
     def test_get_json_bad_request(self, urlopen):
         """

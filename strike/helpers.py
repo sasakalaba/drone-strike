@@ -24,6 +24,15 @@ class Importer(object):
         """
         return datetime.strptime(date_str, settings.DATE_FORMAT).date()
 
+    def parse_name(self, name):
+        """
+        Return name in a proper format.
+        """
+        for c in [' ', '-']:
+            if c in name:
+                name = name.replace(c, '_')
+        return name
+
     def get_json(self):
         """
         Download valid JSON data.
@@ -86,6 +95,8 @@ class Importer(object):
                 strike['date'] = self.parse_date(strike['date'])
 
                 # Create country, and update counter and fk.
+                location_data['country'] = self.parse_name(
+                    location_data['country'])
                 country, created = Country.objects.get_or_create(
                     name=location_data.pop('country', None))
                 location_data['country'] = country.id
