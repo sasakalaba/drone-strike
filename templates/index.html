@@ -1,5 +1,6 @@
 {% extends 'base.html' %}
 {% load static %}
+{% load strike_tags %}
 
 {% block title %}
 Drone Strike
@@ -13,25 +14,36 @@ Drone Strike
 
   <!-- Filters -->
   <div class="filters">
-    <div class="filter-item">
-      <h4>Date</h4>
-      <input type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
-    </div>
+    <form action="{% url 'index' %}" method="GET">
+      <div class="filter-item">
+        <h4>Date</h4>
+        <input id="id_daterange" type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
+      </div>
 
-    <div class="filter-item">
-      <h4>Country</h4>
-      <input type="text" id="tbCountries" placeholder="Select a country." />
-    </div>
+      <div id="tbCountries" class="filter-item">
+        <h4>Country</h4>
+        <select id="id_country__name" name="country__name">
+          <option value="all">All Countries</option>
+          {% for country in country_filters %}
+          <option value="{{ country.title }}">{{ country.title }}</option>
+          {% endfor %}
+        </select>
 
-    <div class="filter-item">
-      <h4>Province</h4>
-      <input type="text" id="tbProvinces" placeholder="Select a country first."/>
-    </div>
+      </div>
 
-    <div class="filter-item">
-      <h4>City / Town</h4>
-      <input type="text" id="tbCities" placeholder="Select a country first." />
-    </div>
+      <div class="filter-item">
+        <h4>Province</h4>
+        <input id="id_province" name="province" type="text" placeholder="Select a province."/>
+      </div>
+
+      <div class="filter-item">
+        <h4>City / Town</h4>
+        <input id="id_town" name="town" type="text" placeholder="Select a city." />
+      </div>
+
+      <input type="submit" value="Submit">
+      <input type="reset" value="Reset">
+    </form>
   </div>
 
   <!-- Map -->
@@ -124,8 +136,10 @@ Drone Strike
       {% endfor %}
 
       // Create marker clusters
+      /*
       var markerCluster = new MarkerClusterer(map, markers,
             {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
+      */
 
       // Create the search box and link it to the UI element.
       var input = document.getElementById('pac-input');
@@ -204,55 +218,53 @@ Drone Strike
 
   <script>
       $(document).ready(function() {
-          BindControls();
-          $('input[name="daterange"]').daterangepicker();
+          // Set date picker
+          $('input[name="daterange"]').daterangepicker()
 
-          $("#tbCountries").keyup(function() {
-              if (this.value == '') {
-                  $('#tbProvinces').attr("placeholder", 'Select a country first.');
-                  $('#tbCities').attr("placeholder", 'Select a country first.');
-              }
-          });
+          // Map city filters
+          {% for key, value in city_filters.items %}
+            var {{ key }}_cities = "{% get_list value %}".split(", ");
+          {% endfor %}
+
+          // Map province filters
+          {% for key, value in province_filters.items %}
+            var {{ key }}_provinces = "{% get_list value %}".split(", ");
+          {% endfor %}
+
+          // Dynamic filter options, based on selected country
+          $("#tbCountries").change(function() {
+              $("#tbCountries option:selected").each(function() {
+
+                // Reset previous entries
+                $("#id_province").val("");
+                $("#id_town").val("");
+                $('#id_province').unbind();
+                $('#id_town').unbind();
+
+                // Set new values
+                BindControls(eval($(this).val() + '_provinces'), "#id_province");
+                BindControls(eval($(this).val() + '_cities'), "#id_town");
+              });
+          }).trigger("change");
       });
 
-      function BindControls() {
-          var countries = [
-              'Argentina',
-              'AUSTRALIA',
-              'BRAZIL',
-              'BELARUS',
-              'BHUTAN',
-              'CHILE',
-              'CAMBODIA',
-              'CANADA',
-              'CHILE',
-              'DENMARK',
-              'DOMINICA'
-          ];
-
-          $('#tbCountries').autocomplete({
+      // function BindControls() {
+      function BindControls(countries, selector) {
+          $(selector).autocomplete({
               source: countries,
               minLength: 0,
               scroll: true
           }).focus(function() {
               $(this).autocomplete("search", "");
-              $('#tbProvinces').attr("placeholder", 'Select a province.');
-              $('#tbCities').attr("placeholder", 'Select a city.');
           });
       }
   </script>
 
-  <!-- Places library -->
-  <!--
-  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places" async defer></script>
-  -->
+  <!-- Google Maps API-->
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places&callback=initMap" async defer></script>
 
   <!-- Marker Cluster library -->
-  <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
-
-  <!-- Google Maps API key -->
   <!--
-  <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&callback=initMap"></script>
+  <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
   -->
 {% endblock %}

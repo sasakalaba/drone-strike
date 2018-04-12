@@ -2,13 +2,13 @@ import freezegun
 import json
 import mock
 from datetime import date
-from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from strike.helpers import Importer
 from strike.models import Location, Country, Strike
 from strike.serializers import LocationSerializer
 from strike.views import IndexView
+from strike.forms import StrikeFilterForm
 from rest_framework import exceptions
 from .base import BaseTestCase
 
@@ -91,6 +91,13 @@ class ImporterTest(BaseTestCase):
         """
         date_str = '2002-11-03T00:00:00.000Z'
         self.assertEqual(self.importer.parse_date(date_str), date(2002, 11, 3))
+
+    def test_parse_name(self):
+        """
+        Set proper name format.
+        """
+        name = 'Pakistan-Afganistan Border'
+        self.assertEqual(self.importer.parse_name(name), 'Pakistan_Afganistan_Border')
 
     @mock.patch('strike.helpers.urlopen')
     def test_get_json_bad_request(self, urlopen):
@@ -374,29 +381,51 @@ class IndexViewTest(BaseTestCase):
         super(IndexViewTest, self).setUp()
         self.view = IndexView()
         self.location = Location.objects.create(country=self.country)
-
-    @freezegun.freeze_time('2012-01-14')
-    def test_get(self):
-        """
-        Index GET,
-        """
-        strike = Strike.objects.create(
+        self.strike = Strike.objects.create(
             number=666,
             location=self.location,
-            date=date(2011, 10, 13),
+            date=date(2011, 10, 14),
             articles=[],
             names=[]
         )
 
+    @freezegun.freeze_time('2012-01-14')
+    def test_default_daterange(self):
+        """
+        Date method responsible for parsing data for filtering.
+        """
+        date_range = {
+            'date__gte': freezegun.api.FakeDate(2011, 10, 14),
+            'date__lte': freezegun.api.FakeDate(2012, 1, 14)
+        }
+        self.assertEqual(self.view.default_daterange, date_range)
+
+    @freezegun.freeze_time('2012-01-14')
+    def test_get_default_range(self):
+        """
+        Default range must reflect that specified in settings.
+        """
+
+        # Strike in default range.
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context['locations']), list(Location.objects.all()))
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
+
         # Strike not in default range.
+        self.strike.date = date(2011, 10, 13)
+        self.strike.save()
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(list(response.context['locations']), [])
         self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
 
-        # Strike in default range.
-        strike.date = date(2011, 10, 14)
-        strike.save()
+    @freezegun.freeze_time('2012-01-14')
+    def test_get_form_not_valid(self):
+        """
+        Invalid form defaults to daterange in settings.
+        """
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
@@ -404,12 +433,173 @@ class IndexViewTest(BaseTestCase):
         self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
 
     @freezegun.freeze_time('2012-01-14')
-    def test_date(self):
+    def test_get_form_valid(self):
         """
-        Date method responsible for parsing data for filtering.
+        Valid form filters by daterange in GET params.
         """
-        date_range = {
-            'date_lower': freezegun.api.FakeDate(2011, 10, 14),
-            'date_upper': freezegun.api.FakeDate(2012, 1, 14)
+
+        # Outside daterange.
+        form_data = {
+            'daterange': '10/15/2011 - 01/14/2012',
+            'country__name': 'SasaLand'
         }
-        self.assertEqual(self.view.date, date_range)
+        response = self.client.get(reverse('index'), form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['locations']), [])
+
+        # Inside daterange.
+        form_data = {
+            'daterange': '10/14/2011 - 01/14/2012',
+            'country__name': 'SasaLand'
+        }
+        response = self.client.get(reverse('index'), form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(
+            list(response.context['locations']), list(Location.objects.all()))
+
+    def test_get_filters(self):
+        """
+        Retrieve all unique values for filters.
+        """
+        self.location.town = 'SasaTown'
+        self.location.location = 'SasaProvince'
+        self.location.save()
+
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['country_filters']), ['SasaLand'])
+        self.assertEqual(
+            response.context['city_filters']['SasaLand'][0], 'SasaTown')
+        self.assertEqual(
+            response.context['province_filters']['SasaLand'][0], 'SasaProvince')
+
+    @freezegun.freeze_time('2012-01-14')
+    def test_get_form_daterange(self):
+        """
+        Last valid daterange should be passed to context.
+        """
+        form_data = {
+            'daterange': '12/15/2011 - 01/14/2012',
+            'country__name': 'SasaLand'
+        }
+        response = self.client.get(reverse('index'), form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['daterange'], '12-15-2011 - 01-14-2012')
+
+    @freezegun.freeze_time('2012-01-14')
+    def test_get_form_default_daterange(self):
+        """
+        Invalid daterange should pass default daterange to context.
+        """
+
+        # Invalid daterange.
+        form_data = {
+            'daterange': '2011 - 01/14/2012',
+            'country__name': 'SasaLand'
+        }
+        response = self.client.get(reverse('index'), form_data)
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
+
+
+class StrikeFilterFormTest(BaseTestCase):
+    """
+    Unit tests for filter form.
+    """
+
+    def setUp(self):
+        super(StrikeFilterFormTest, self).setUp()
+        self.location = Location.objects.create(country=self.country)
+        self.form = StrikeFilterForm()
+
+    def test_init(self):
+        """
+        Country choices are dynamically set during form init.
+        """
+        self.assertEqual(
+            self.form.fields['country__name'].choices,
+            [('SasaLand', 'SasaLand'), ('all', '')]
+        )
+
+    def test_get_values(self):
+        """
+        Values have to be prepared for queryset filtering.
+        """
+
+        # Form not valid.
+        self.form = StrikeFilterForm({
+            'daterange': '04/12/1993 - 04/12/2018888888',
+            'country__name': 'SasaLand'
+        })
+        self.assertEqual(self.form.get_values(), {})
+        self.assertFalse(self.form.is_valid())
+
+        # Remove any empty string or None values.
+        self.form = StrikeFilterForm({
+            'daterange': '04/12/1993 - 04/12/2018',
+            'country__name': 'SasaLand',
+            'province': ''
+        })
+        cleaned_data = {
+            'country__name': 'SasaLand',
+            'daterange': {
+                'date__lte': date(2018, 4, 12),
+                'date__gte': date(1993, 4, 12)}
+        }
+        self.assertDictEqual(self.form.get_values(), cleaned_data)
+
+        # Province is named location in database, and must be set as such.
+        self.form = StrikeFilterForm({
+            'daterange': '04/12/1993 - 04/12/2018',
+            'country__name': 'SasaLand',
+            'province': 'This is a location.'
+        })
+        cleaned_data = {
+            'country__name': 'SasaLand',
+            'daterange': {
+                'date__lte': date(2018, 4, 12),
+                'date__gte': date(1993, 4, 12)},
+            'location': 'This is a location.'
+        }
+        self.assertDictEqual(self.form.get_values(), cleaned_data)
+
+
+    def test_clean_daterange(self):
+        """
+        Parses daterange string and returns date objects.
+        """
+
+        # Form not valid.
+        self.form = StrikeFilterForm({
+            'daterange': '04/12/1993 - 04/12/2018888888',
+            'country__name': 'SasaLand'
+        })
+        error_msg = "Date range must be 'mm/dd/yyyy - mm/dd/yyyy'."
+
+        with self.assertRaises(ValidationError) as error:
+            self.form.clean_daterange()
+        self.assertEqual(error.exception.message, error_msg)
+        self.assertFalse(self.form.is_valid())
+
+        # Too many delimiters.
+        self.form = StrikeFilterForm({
+            'daterange': '04 - 1993 - 04/12/2018',
+            'country__name': 'SasaLand'
+        })
+
+        with self.assertRaises(ValidationError) as error:
+            self.form.clean_daterange()
+        self.assertEqual(error.exception.message, error_msg)
+        self.assertFalse(self.form.is_valid())
+
+        # Daterange not in proper format.
+        self.form = StrikeFilterForm({
+            'daterange': '22/04/1993 - 04/12/2018',
+            'country__name': 'SasaLand'
+        })
+        error_msg = "Date range must be 'mm/dd/yyyy - mm/dd/yyyy'."
+
+        with self.assertRaises(ValidationError) as error:
+            self.form.clean_daterange()
+        self.assertEqual(error.exception.message, error_msg)
+        self.assertFalse(self.form.is_valid())
