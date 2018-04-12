@@ -21,7 +21,7 @@ html, body {
   margin: 5px 10px;
 }
 #map {
-  height: 650px;
+  height: 675px;
   width: 100%;
 }
 
@@ -33,16 +33,13 @@ html, body {
   padding: 2.4px 7px 3px;
   background: #fff;
 }
-
 .filter-form {
   display: inline-block;
 }
-
 .filters {
   padding: 0 4px 10px;
   background-color: #617487;
 }
-
 .filter-item {
   display: inline-block;
   margin: 0 5px;
@@ -57,6 +54,10 @@ html, body {
 }
 .filter-item .datefilter {
   padding-left: 13px;
+}
+#search {
+  margin-left: 50px;
+  width: 400px;
 }
 
 
@@ -83,9 +84,11 @@ html, body {
   padding-top: 1.5rem;
   padding-bottom: 1.5rem
 }
-
-
-#search {
-  margin-left: 50px;
-  width: 400px;
+.footer a {
+  font-size: 17px;
+  color: white;
+}
+.footer a:hover {
+  color: grey;
+  text-decoration: none;
 }
