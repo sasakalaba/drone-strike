@@ -404,6 +404,14 @@ class IndexViewTest(BaseTestCase):
         self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
 
     @freezegun.freeze_time('2012-01-14')
+    def test_get_filters(self):
+        """
+        Ensure that proper filter values are set, based on selected locations.
+        """
+        # TODO
+        pass
+
+    @freezegun.freeze_time('2012-01-14')
     def test_date(self):
         """
         Date method responsible for parsing data for filtering.

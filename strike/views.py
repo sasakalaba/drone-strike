@@ -34,11 +34,25 @@ class IndexView(View):
 
         locations = Location.objects.filter(id__in=locations_ids)
 
+        # Set filter values for selected locations
+        city_filters = {}
+        province_filters = {}
+
+        country_filters = locations.values_list('country__name', flat=True).distinct()
+        for country in country_filters:
+            city_filters[country] = locations.filter(
+                country__name=country).values_list('town', flat=True).distinct()
+            province_filters[country] = locations.filter(
+                country__name=country).values_list('location', flat=True).distinct()
+
         self.context = {
             'locations': locations,
             'daterange': ' - '.join([
                 self.date['date_lower'].strftime("%m-%d-%Y"),
                 self.date['date_upper'].strftime("%m-%d-%Y")
-            ])
+            ]),
+            'country_filters': country_filters,
+            'city_filters': city_filters,
+            'province_filters': province_filters
         }
         return render(request, self.template, self.context)
