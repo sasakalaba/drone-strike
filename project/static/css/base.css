@@ -1,32 +1,152 @@
 /*!
  Use this file to override main css file for your custom settings.
 */
-body {
-
+html, body {
+  height: 100%;
+  margin: 0;
+  padding: 0;
+  font-family: Lato;
+}
+.header {
+  background: #202334;
+}
+.header h2 {
+  display: inline-block;
+  vertical-align: sub;
+  font-family: 'Orbitron', sans-serif;
+  color: #F8F8F8;
+}
+#logo {
+  width: 150px;
+  margin: 5px 10px;
+}
+#map {
+  height: 650px;
+  width: 100%;
 }
 
-#map {
-    height: 600px;
-    width: 100%;
+#description {
+  font-size: 15px;
+  font-weight: 300;
+}
+
+#infowindow-content .title {
+  font-weight: bold;
+}
+
+#infowindow-content {
+  display: none;
+}
+
+#map #infowindow-content {
+  display: inline;
+}
+
+.pac-card {
+  margin: 10px 10px 0 0;
+  border-radius: 2px 0 0 2px;
+  box-sizing: border-box;
+  -moz-box-sizing: border-box;
+  outline: none;
+  box-shadow: 0 2px 6px rgba(0, 0, 0, 0.3);
+  background-color: #fff;
+  font-family: Roboto;
+}
+
+#pac-container {
+  padding-bottom: 12px;
+  margin-right: 12px;
+}
+
+.pac-controls {
+  display: inline-block;
+  padding: 5px 11px;
+}
+
+.pac-controls label {
+  font-family: Roboto;
+  font-size: 13px;
+  font-weight: 300;
 }
 
 #pac-input {
-    background-color: #fff;
-    font-family: Roboto;
-    font-size: 15px;
-    font-weight: 300;
-    margin-left: 12px;
-    padding: 0 11px 0 13px;
-    text-overflow: ellipsis;
-    width: 400px;
+  background-color: #fff;
+  font-family: Roboto;
+  font-size: 15px;
+  font-weight: 300;
+  margin-left: 12px;
+  padding: 0 11px 0 13px;
+  text-overflow: ellipsis;
+  width: 400px;
+  margin-top: 7px;
+  height: 35px;
+  border: 1.5px solid grey;
+}
+#pac-input:focus {
+  border-color: #4d90fe;
 }
 
-#pac-input:focus {
-    border-color: #4d90fe;
+#title {
+  color: #fff;
+  background-color: #4d90fe;
+  font-size: 25px;
+  font-weight: 500;
+  padding: 6px 12px;
+}
+#target {
+  width: 345px;
 }
 
 .ui-autocomplete {
-    cursor:pointer;
-    height:120px;
-    overflow-y:scroll;
+  cursor:pointer;
+  height:120px;
+  overflow-y:scroll;
+}
+
+
+/* ---- Filters ---- */
+.filters {
+  padding: 0 4px 10px;
+  background-color: #617487;
+}
+
+.filter-item {
+  display: inline-block;
+  margin: 0 5px;
+}
+.filter-item h4 {
+  margin-bottom: 1px;
+  color: #F8F8F8;
+}
+.filter-item input {
+  border-radius: 3px;
+  padding-left: 10px;
+}
+.filter-item .datefilter {
+  padding-left: 13px;
+}
+
+
+/* --- Footer --- */
+.footer {
+  padding: 1.2rem 0;
+  background-color: #2c3e50;
+  color: #fff;
+  text-align: center;
+}
+.footer_container {
+  width: 70%;
+  margin-left: auto;
+  margin-right: auto;
+}
+.footer_container .row .mb-5{
+  padding-left: 0;
+  margin-left: -55px;
+}
+.copyright {
+  background-color: #1a252f;
+  color: #fff;
+  text-align: center;
+  padding-top: 1.5rem;
+  padding-bottom: 1.5rem
 }

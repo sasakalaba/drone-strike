@@ -1,6 +1,8 @@
-import mock
+import freezegun
 import json
+import mock
 from datetime import date
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from strike.helpers import Importer
@@ -305,12 +307,62 @@ class LocationTest(BaseTestCase):
         Ensure proper str representation is returned.
         """
         location = Location.objects.create(country=self.country)
-        self.assertEqual(str(location), 'SasaLand')
+        self.assertEqual(str(location), '%d. SasaLand' % location.id)
 
         # Town str
         location.town = 'Gotham'
         location.save()
-        self.assertEqual(str(location), 'SasaLand - Gotham')
+        self.assertEqual(str(location), '%d. SasaLand - Gotham' % location.id)
+
+    def test_strike_info(self):
+        """
+        Returns a list or a dict, depending on a set of values related to the
+        selected instance.
+        """
+        location = Location.objects.create(country=self.country)
+
+        # No related strike
+        self.assertEqual(location.strike_info, {})
+
+        # One related strike
+        Strike.objects.create(
+            number=666,
+            location=location,
+            date=date(2002, 2, 1),
+            articles=[],
+            names=[],
+            deaths='4'
+        )
+        strike_info = {
+            'detail': True,
+            'number': 666,
+            'date': '02-01-2002',
+            'deaths': '4'
+        }
+        self.assertDictEqual(location.strike_info, strike_info)
+
+        # Multiple related strikes
+        Strike.objects.create(
+            number=777,
+            location=location,
+            date=date(2003, 3, 2),
+            articles=[],
+            names=[],
+            deaths='3'
+        )
+
+        strike_info1 = {
+            'number': 666,
+            'date': '02-01-2002',
+        }
+        strike_info2 = {
+            'number': 777,
+            'date': '03-02-2003',
+        }
+        self.assertFalse(location.strike_info['detail'])
+        self.assertEqual(location.strike_info['num_of_strikes'], 2)
+        self.assertIn(strike_info1, location.strike_info['strikes'])
+        self.assertIn(strike_info2, location.strike_info['strikes'])
 
 
 class IndexViewTest(BaseTestCase):
@@ -321,14 +373,43 @@ class IndexViewTest(BaseTestCase):
     def setUp(self):
         super(IndexViewTest, self).setUp()
         self.view = IndexView()
+        self.location = Location.objects.create(country=self.country)
 
+    @freezegun.freeze_time('2012-01-14')
     def test_get(self):
         """
         Index GET,
         """
-        Location.objects.create(country=self.country)
+        strike = Strike.objects.create(
+            number=666,
+            location=self.location,
+            date=date(2011, 10, 13),
+            articles=[],
+            names=[]
+        )
+
+        # Strike not in default range.
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['locations']), [])
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
+
+        # Strike in default range.
+        strike.date = date(2011, 10, 14)
+        strike.save()
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             list(response.context['locations']), list(Location.objects.all()))
-        self.assertEqual(Location.objects.count(), 1)
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
+
+    @freezegun.freeze_time('2012-01-14')
+    def test_date(self):
+        """
+        Date method responsible for parsing data for filtering.
+        """
+        date_range = {
+            'date_lower': freezegun.api.FakeDate(2011, 10, 14),
+            'date_upper': freezegun.api.FakeDate(2012, 1, 14)
+        }
+        self.assertEqual(self.view.date, date_range)

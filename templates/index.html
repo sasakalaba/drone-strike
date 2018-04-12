@@ -6,30 +6,96 @@ Drone Strike
 {% endblock %}
 
 {% block base %}
-  <!-- Map -->
-  <h1>Drone Strike map</h1>
-  <input id="pac-input" class="controls" type="text" placeholder="Search Box">
-
-  <input type="text" name="daterange" value="01/01/2015 - 01/31/2015" />
-
-  <input type="text" id="tbCountries" />
-
-  <div id="map"> </div>
-
-  <!-- Search results -->
-  <div id="search_results">
-    <ul>
-      {% for location in locations %}
-        <li>{{ location.lat }}, {{ location.lon }}</li>
-      {% endfor %}
-    </ul>
+  <div class="header">
+    <img id="logo" src="{% static 'img/logo.png' %}" alt="Treviso theme logo">
+    <h2>Drone Strike</h2>
   </div>
-  <!-- end search results -->
+
+  <!-- Filters -->
+  <div class="filters">
+    <div class="filter-item">
+      <h4>Date</h4>
+      <input type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
+    </div>
+
+    <div class="filter-item">
+      <h4>Country</h4>
+      <input type="text" id="tbCountries" placeholder="Select a country." />
+    </div>
+
+    <div class="filter-item">
+      <h4>Province</h4>
+      <input type="text" id="tbProvinces" placeholder="Select a country first."/>
+    </div>
+
+    <div class="filter-item">
+      <h4>City / Town</h4>
+      <input type="text" id="tbCities" placeholder="Select a country first." />
+    </div>
+  </div>
+
+  <!-- Map -->
+  <div style="display: none;">
+    <input id="pac-input" class="controls" type="text" placeholder="Search Box">
+  </div>
+  <div id="map"></div>
+
+  <!-- Footer -->
+  <footer class="footer">
+    <div class="footer_container">
+      <div class="row">
+        <div class="col-md-4 mb-5">
+          <h4 class="text-uppercase mb-4">Location</h4>
+          <p class="lead mb-0">2215 John Daniel Drive
+            <br>Clark, MO 65243</p>
+        </div>
+        <div class="col-md-4">
+          <h4 class="text-uppercase mb-4">Around the Web</h4>
+          <p class="lead mb-0">Insert some info.</p>
+        </div>
+        <div class="col-md-4">
+          <h4 class="text-uppercase mb-4">About Freelancer</h4>
+          <p class="lead mb-0">Freelance is a free to use, open source Bootstrap theme created by
+            <a href="http://startbootstrap.com">Start Bootstrap</a>.</p>
+        </div>
+      </div>
+    </div>
+  </footer>
+
+  <div class="copyright">
+    <div class="container">
+      <small>Copyright &copy; Drone Strike 2018</small>
+    </div>
+  </div>
 {% endblock %}
 
 {% block extra_script %}
   <script>
     function initMap() {
+
+      function addMarker(coors, map, content){
+        // Add Marker function
+        var marker = new google.maps.Marker({
+          position: coors,
+          map: map
+        });
+
+        // Marker information
+        var infoWindowHover = new google.maps.InfoWindow({
+          content: content
+        });
+
+        // Marker listeners
+        marker.addListener('mouseover', function(){
+          infoWindowHover.open(map, marker);
+        });
+        marker.addListener('mouseout', function() {
+          infoWindowHover.close();
+        });
+
+        return marker;
+      }
+
       // Init map
       var base_coor = {lat: 12.89363, lng: 39.88600};
       var map = new google.maps.Map(document.getElementById('map'), {
@@ -37,58 +103,102 @@ Drone Strike
         center: base_coor
       });
 
-      // Add marker
-      var marker = new google.maps.Marker({
-        position: {lat: 32.30512565, lng: 69.57624435},
-        map: map
-      });
-
-      // Marker information
-      var infoWindowHover = new google.maps.InfoWindow({
-        content: '<h1>Header hover</h1>'
-      });
-      var infoWindowDetail = new google.maps.InfoWindow({
-        content: '<h1>Header detail</h1> \n <p>Hello world</p>'
-      });
-
-
-      // Marker listeners
-      marker.addListener('mouseover', function(){
-        infoWindowHover.open(map, marker);
-      });
-      marker.addListener('mouseout', function() {
-        infoWindowHover.close();
-      });
-
-      marker.addListener('click', function(){
-        infoWindowHover.close();
-        infoWindowDetail.open(map, marker);
-      });
-
-      // Add Marker function
-      function addMarker(coors){
-        var marker = new google.maps.Marker({
-          position: coors,
-          map: map
-        });
-        return marker;
-      }
-
       // Create all markers
-      var markers = []
+      var markers = [];
+      var content = '';
       {% for location in locations %}
-        markers.push(addMarker({lat: {{ location.lat }}, lng: {{ location.lon }}}));
+        {% if location.strike_info.detail %}
+          content = `
+          <h3>#{{ location.strike_info.number }}</h3>
+          <p><span style="font-weight: bold;">Date</span>: {{ location.strike_info.date }}</p>
+          <p><span style="font-weight: bold;">Deaths</span>: {{ location.strike_info.deaths }}</p>`;
+        {% else %}
+          content = `
+          <h3 style="color: #600000;">{{ location.strike_info.num_of_strikes }} strikes</h3>
+          {% for strike in location.strike_info.strikes %}
+            <p><span style="font-weight: bold;">{{ strike.number }}</span>: {{ strike.date }}</p>
+          {% endfor %}`;
+        {% endif %}
+
+        markers.push(addMarker({lat: {{ location.lat }}, lng: {{ location.lon }}}, map, content));
       {% endfor %}
 
       // Create marker clusters
       var markerCluster = new MarkerClusterer(map, markers,
             {imagePath: 'https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/m'});
 
-
-      // Searchbar
+      // Create the search box and link it to the UI element.
       var input = document.getElementById('pac-input');
-      // var searchBox = new google.maps.places.SearchBox(input);
-      // map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+      var searchBox = new google.maps.places.SearchBox(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+    }
+
+
+    function initAutocomplete() {
+      var map = new google.maps.Map(document.getElementById('map'), {
+        center: {lat: -33.8688, lng: 151.2195},
+        zoom: 13,
+        mapTypeId: 'roadmap'
+      });
+
+      // Create the search box and link it to the UI element.
+      var input = document.getElementById('pac-input');
+      var searchBox = new google.maps.places.SearchBox(input);
+      map.controls[google.maps.ControlPosition.TOP_LEFT].push(input);
+
+      // Bias the SearchBox results towards current map's viewport.
+      map.addListener('bounds_changed', function() {
+        searchBox.setBounds(map.getBounds());
+      });
+
+      var markers = [];
+      // Listen for the event fired when the user selects a prediction and retrieve
+      // more details for that place.
+      searchBox.addListener('places_changed', function() {
+        var places = searchBox.getPlaces();
+
+        if (places.length == 0) {
+          return;
+        }
+
+        // Clear out the old markers.
+        markers.forEach(function(marker) {
+          marker.setMap(null);
+        });
+        markers = [];
+
+        // For each place, get the icon, name and location.
+        var bounds = new google.maps.LatLngBounds();
+        places.forEach(function(place) {
+          if (!place.geometry) {
+            console.log("Returned place contains no geometry");
+            return;
+          }
+          var icon = {
+            url: place.icon,
+            size: new google.maps.Size(71, 71),
+            origin: new google.maps.Point(0, 0),
+            anchor: new google.maps.Point(17, 34),
+            scaledSize: new google.maps.Size(25, 25)
+          };
+
+          // Create a marker for each place.
+          markers.push(new google.maps.Marker({
+            map: map,
+            icon: icon,
+            title: place.name,
+            position: place.geometry.location
+          }));
+
+          if (place.geometry.viewport) {
+            // Only geocodes have viewport.
+            bounds.union(place.geometry.viewport);
+          } else {
+            bounds.extend(place.geometry.location);
+          }
+        });
+        map.fitBounds(bounds);
+      });
     }
   </script>
 
@@ -96,10 +206,18 @@ Drone Strike
       $(document).ready(function() {
           BindControls();
           $('input[name="daterange"]').daterangepicker();
+
+          $("#tbCountries").keyup(function() {
+              if (this.value == '') {
+                  $('#tbProvinces').attr("placeholder", 'Select a country first.');
+                  $('#tbCities').attr("placeholder", 'Select a country first.');
+              }
+          });
       });
 
       function BindControls() {
-          var Countries = ['ARGENTINA',
+          var countries = [
+              'Argentina',
               'AUSTRALIA',
               'BRAZIL',
               'BELARUS',
@@ -109,24 +227,32 @@ Drone Strike
               'CANADA',
               'CHILE',
               'DENMARK',
-              'DOMINICA'];
+              'DOMINICA'
+          ];
 
           $('#tbCountries').autocomplete({
-              source: Countries,
+              source: countries,
               minLength: 0,
               scroll: true
           }).focus(function() {
               $(this).autocomplete("search", "");
+              $('#tbProvinces').attr("placeholder", 'Select a province.');
+              $('#tbCities').attr("placeholder", 'Select a city.');
           });
       }
   </script>
 
   <!-- Places library -->
+  <!--
   <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places" async defer></script>
+  -->
+  <script src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&libraries=places&callback=initMap" async defer></script>
 
   <!-- Marker Cluster library -->
   <script src="https://developers.google.com/maps/documentation/javascript/examples/markerclusterer/markerclusterer.js"></script>
 
   <!-- Google Maps API key -->
+  <!--
   <script async defer src="https://maps.googleapis.com/maps/api/js?key=AIzaSyC8j277ePP0PfH8VZIVtIMDyRKJpId7LUg&callback=initMap"></script>
+  -->
 {% endblock %}
