@@ -14,31 +14,36 @@ Drone Strike
 
   <!-- Filters -->
   <div class="filters">
-    <div class="filter-item">
-      <h4>Date</h4>
-      <input type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
-    </div>
+    <form action="{% url 'index' %}" method="GET">
+      <div class="filter-item">
+        <h4>Date</h4>
+        <input id="id_daterange" type="text" class="datefilter" name="daterange" value="{{ daterange }}" />
+      </div>
 
-    <div id="tbCountries" class="filter-item">
-      <h4>Country</h4>
-      <select>
-        {% for country in country_filters %}
-        <option value="{% trim country.title %}">{% trim country.title %}</option>
-        {% endfor %}
-      </select>
+      <div id="tbCountries" class="filter-item">
+        <h4>Country</h4>
+        <select id="id_country__name" name="country__name">
+          <option value="all">All Countries</option>
+          {% for country in country_filters %}
+          <option value="{{ country.title }}">{{ country.title }}</option>
+          {% endfor %}
+        </select>
 
-    </div>
+      </div>
 
+      <div class="filter-item">
+        <h4>Province</h4>
+        <input id="id_province" name="province" type="text" placeholder="Select a province."/>
+      </div>
 
-    <div class="filter-item">
-      <h4>Province</h4>
-      <input type="text" id="tbProvinces" placeholder="Select a province."/>
-    </div>
+      <div class="filter-item">
+        <h4>City / Town</h4>
+        <input id="id_town" name="town" type="text" placeholder="Select a city." />
+      </div>
 
-    <div class="filter-item">
-      <h4>City / Town</h4>
-      <input type="text" id="tbCities" placeholder="Select a city." />
-    </div>
+      <input type="submit" value="Submit">
+      <input type="reset" value="Reset">
+    </form>
   </div>
 
   <!-- Map -->
@@ -218,12 +223,12 @@ Drone Strike
 
           // Map city filters
           {% for key, value in city_filters.items %}
-            var {% trim key %}_cities = "{% get_list value %}".split(", ");
+            var {{ key }}_cities = "{% get_list value %}".split(", ");
           {% endfor %}
 
           // Map province filters
           {% for key, value in province_filters.items %}
-            var {% trim key %}_provinces = "{% get_list value %}".split(", ");
+            var {{ key }}_provinces = "{% get_list value %}".split(", ");
           {% endfor %}
 
           // Dynamic filter options, based on selected country
@@ -231,14 +236,14 @@ Drone Strike
               $("#tbCountries option:selected").each(function() {
 
                 // Reset previous entries
-                $("#tbProvinces").val("");
-                $("#tbCities").val("");
-                $('#tbProvinces').unbind();
-                $('#tbCities').unbind();
+                $("#id_province").val("");
+                $("#id_town").val("");
+                $('#id_province').unbind();
+                $('#id_town').unbind();
 
                 // Set new values
-                BindControls(eval($(this).val() + '_provinces'), "#tbProvinces");
-                BindControls(eval($(this).val() + '_cities'), "#tbCities");
+                BindControls(eval($(this).val() + '_provinces'), "#id_province");
+                BindControls(eval($(this).val() + '_cities'), "#id_town");
               });
           }).trigger("change");
       });
