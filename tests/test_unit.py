@@ -1,7 +1,8 @@
 import freezegun
 import json
 import mock
-from datetime import date, datetime, timedelta
+from datetime import date
+from django.conf import settings
 from django.core.exceptions import ValidationError
 from django.urls import reverse
 from strike.helpers import Importer
@@ -379,23 +380,28 @@ class IndexViewTest(BaseTestCase):
         """
         Index GET,
         """
-        Strike.objects.create(
+        strike = Strike.objects.create(
             number=666,
             location=self.location,
-            date=datetime.today().date() - timedelta(days=1),
+            date=date(2011, 10, 13),
             articles=[],
             names=[]
         )
 
-        # Ensure that proper queryset is returned.
+        # Strike not in default range.
+        response = self.client.get(reverse('index'))
+        self.assertEqual(response.status_code, 200)
+        self.assertEqual(list(response.context['locations']), [])
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
+
+        # Strike in default range.
+        strike.date = date(2011, 10, 14)
+        strike.save()
         response = self.client.get(reverse('index'))
         self.assertEqual(response.status_code, 200)
         self.assertEqual(
             list(response.context['locations']), list(Location.objects.all()))
-        self.assertEqual(Strike.objects.count(), 1)
-
-        # Ensure that proper daterange is returned.
-        self.assertEqual(response.context['daterange'], '01-14-1987 - 01-14-2012')
+        self.assertEqual(response.context['daterange'], '10-14-2011 - 01-14-2012')
 
     @freezegun.freeze_time('2012-01-14')
     def test_date(self):
@@ -403,7 +409,7 @@ class IndexViewTest(BaseTestCase):
         Date method responsible for parsing data for filtering.
         """
         date_range = {
-            'date_lower': freezegun.api.FakeDate(1987, 1, 14),
+            'date_lower': freezegun.api.FakeDate(2011, 10, 14),
             'date_upper': freezegun.api.FakeDate(2012, 1, 14)
         }
         self.assertEqual(self.view.date, date_range)

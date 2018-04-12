@@ -88,3 +88,4 @@ STATICFILES_DIRS = (
 
 # Strike configuration
 STRIKE_DATA_URL = ENV_STR('STRIKE_DATA_URL', 'https://api.dronestre.am/data')
+STRIKE_DATE_MONTH_RANGE = int(ENV_SETTING('STRIKE_DATE_MONTH_RANGE', 3))

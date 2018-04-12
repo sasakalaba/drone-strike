@@ -1,5 +1,6 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
+from django.conf import settings
 from django.shortcuts import render
 from django.views import View
 from .models import Strike, Location
@@ -16,7 +17,8 @@ class IndexView(View):
         """
         today = datetime.today()
         return {
-            'date_lower': (today - relativedelta(months=300)).date(),
+            'date_lower': (today - relativedelta(
+                months=settings.STRIKE_DATE_MONTH_RANGE)).date(),
             'date_upper': today.date(),
         }
 
