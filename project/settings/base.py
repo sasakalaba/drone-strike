@@ -43,6 +43,7 @@ TEMPLATES = [
                 'django.template.context_processors.request',
                 'django.contrib.auth.context_processors.auth',
                 'django.contrib.messages.context_processors.messages',
+                'strike.context_processors.google_key',
             ],
         },
     },
@@ -89,3 +90,4 @@ STATICFILES_DIRS = (
 # Strike configuration
 STRIKE_DATA_URL = ENV_STR('STRIKE_DATA_URL', 'https://api.dronestre.am/data')
 STRIKE_DATE_MONTH_RANGE = int(ENV_SETTING('STRIKE_DATE_MONTH_RANGE', 3))
+GOOGLE_MAPS_JS_API_KEY = ENV_STR('GOOGLE_MAPS_JS_API_KEY', '')
