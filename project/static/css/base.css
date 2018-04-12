@@ -55,8 +55,11 @@ html, body {
 .filter-item .datefilter {
   padding-left: 13px;
 }
-#search {
+#searchform {
   margin-left: 50px;
+  display: inline-block;
+}
+#searchform input {
   width: 400px;
 }
 

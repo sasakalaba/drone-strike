@@ -44,7 +44,13 @@ Drone Strike
       <input type="submit" value="Submit">
       <input type="reset" value="Reset">
     </form>
-    <input id="search" class="controls" type="text" placeholder="Search Box">
+
+
+
+    <form id="searchform" action="{% url 'search' %}" method="get" accept-charset="utf-8">
+       <input id="search" class="controls" type="text" placeholder="Search Box">
+    </form>
+
   </div>
 
   <!-- Map -->
