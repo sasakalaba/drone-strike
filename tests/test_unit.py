@@ -372,6 +372,44 @@ class LocationTest(BaseTestCase):
         self.assertIn(strike_info2, location.strike_info['strikes'])
 
 
+class SearchView(BaseTestCase):
+    """
+    Unit tests for search view.
+    """
+
+    def setUp(self):
+        super(SearchView, self).setUp()
+        self.view = SearchView()
+
+    def test_get_search(self):
+        """
+        Basic search through all text fields.
+        """
+        form_data = {
+            'search_q': 'Sasa'
+        }
+        location = Location.objects.create(country=self.country)
+        country = self.country = Country.objects.create(name='HodorLand')
+        location2 = Location.objects.create(country=country)
+        strike = Strike.objects.create(
+            number=666,
+            location=location,
+            date=date(2011, 10, 14),
+            articles=[],
+            names=[]
+        )
+        strike2 = Strike.objects.create(
+            number=667,
+            location=location2,
+            date=date(2011, 10, 14),
+            articles=['Sasa'],
+            names=[]
+        )
+
+        response = self.client.get(reverse('search'), form_data)
+        self.assertEqual(list(response.context['strikes']), [strike, strike2])
+
+
 class IndexViewTest(BaseTestCase):
     """
     Unit tests for import data helper function.

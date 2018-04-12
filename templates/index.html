@@ -44,11 +44,33 @@ Drone Strike
       <input type="submit" value="Submit">
       <input type="reset" value="Reset">
     </form>
-    <input id="search" class="controls" type="text" placeholder="Search Box">
+
+
+    <form id="searchform" action="{% url 'search' %}" method="GET" accept-charset="utf-8">
+       <input id="searchbar" name="search_q" type="text" placeholder="Search Box">
+       <input type="submit" value="Submit">
+    </form>
+
   </div>
 
   <!-- Map -->
   <div id="map"></div>
+
+  <!-- Search results -->
+  {% if query and strikes %}
+    <div id="search-results">
+      <h2>Search results for {{ query }}</h2>
+
+      <ul>
+        {% for strike in strikes %}
+          <li>
+            <span class="strike_id">{{ strike.id}}</span> {{ strike.location.country.name }}, {{ strike.location.town }}
+            <p>{{ strike.location.lat }}, {{ strike.location.lon }}</p>
+          </li>
+        {% endfor %}
+      </ul>
+    </div>
+  {% endif %}
 
   <!-- Footer -->
   <footer class="footer">

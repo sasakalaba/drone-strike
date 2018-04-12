@@ -1,6 +1,7 @@
 from datetime import datetime
 from dateutil.relativedelta import relativedelta
 from django.conf import settings
+from django.db.models import Q
 from django.shortcuts import render
 from django.views import View
 from .forms import StrikeFilterForm
@@ -78,5 +79,43 @@ class IndexView(View):
             'city_filters': city_filters,
             'province_filters': province_filters,
             'form': form
+        }
+        return render(request, self.template, self.context)
+
+
+class SearchView(View):
+    template = 'index.html'
+    context = {}
+    text_fields = (
+        'narrative', 'deaths', 'deaths_min', 'deaths_max', 'civilians',
+        'injuries', 'children', 'tweet_id', 'bureau_id', 'bij_summary_short',
+        'target', 'articles', 'names', 'location__country__name', 'location__town',
+        'location__location'
+    )
+
+
+    def get(self, request, *args, **kwargs):
+        """
+        Search view.
+        """
+        query = request.GET.get('search_q', '')
+        queries = []
+
+        if query:
+            for field in self.text_fields:
+                queries.append(Q(**{field + '__icontains': query}))
+
+            final_query = queries.pop()
+            for item in queries:
+                final_query |= item
+
+            strikes = Strike.objects.filter(final_query)
+            location_ids = strikes.values_list('location_id', flat=True).distinct()
+            locations = Location.objects.filter(id__in=location_ids)
+
+        self.context = {
+            'query': query,
+            'strikes': strikes,
+            'locations': locations,
         }
         return render(request, self.template, self.context)

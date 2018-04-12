@@ -55,9 +55,36 @@ html, body {
 .filter-item .datefilter {
   padding-left: 13px;
 }
-#search {
+#searchform {
   margin-left: 50px;
+  display: inline-block;
+}
+#searchform #searchbar {
   width: 400px;
+}
+
+
+/* --- Search results ---*/
+#search-results {
+  background-color: #E1E4E7;
+  padding: 20px;
+  font-size: 15px;
+}
+#search-results h2 {
+  padding-left: 10px;
+}
+#search-results .strike_id {
+  font-weight: bold;
+  padding-right: 10px;
+}
+#search-results ul {
+  list-style-type: none;
+}
+#search-results li {
+  padding: 10px;
+}
+#search-results li p {
+  padding-left: 10px;
 }
 
 
