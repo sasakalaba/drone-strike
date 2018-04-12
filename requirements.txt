@@ -5,3 +5,4 @@ dj-database-url
 psycopg2-binary==2.7.4
 mock==2.0.0
 freezegun==0.3.10
+djangorestframework==3.8.2
